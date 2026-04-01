@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: 'Lexend', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f0f9ff;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -17,19 +17,29 @@
             margin: 0;
             padding: 20px;
             color: #1e293b;
-            touch-action: manipulation; /* Prevents accidental zooming on double taps */
+            touch-action: manipulation;
+        }
+
+        /* Zoo Header Styling */
+        .zoo-header {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 15px;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
         }
 
         .instructions {
             background: #ffffff;
             padding: 15px 25px;
-            border-radius: 12px;
+            border-radius: 20px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             max-width: 600px;
-            border: 2px solid #e2e8f0;
+            border: 3px solid #3b82f6;
+            font-weight: 700;
         }
 
         .card-container {
@@ -41,7 +51,7 @@
         @media (max-width: 600px) {
             .card-container {
                 width: 90vw;
-                height: 110vw; /* Flips to portrait-ish on small phones for better fit */
+                height: 110vw;
             }
         }
 
@@ -66,86 +76,100 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 30px;
+            border-radius: 40px;
             background: white;
-            border: 8px solid #3b82f6;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 10px solid #3b82f6;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
         }
 
         .card-back {
             transform: rotateY(180deg);
-            background-color: #f0f9ff;
+            background-color: #ecfdf5;
+            border-color: #10b981;
         }
 
         #object-area {
             position: relative;
-            width: 90%;
-            height: 70%;
+            width: 92%;
+            height: 72%;
             background: #ffffff;
-            border: 2px dashed #cbd5e1;
-            border-radius: 20px;
-            overflow: hidden; /* Keeps dots inside the pen */
+            border-radius: 25px;
+            overflow: hidden;
         }
 
-        /* DOT STYLING - High Visibility */
         .dot {
-            width: 45px;
-            height: 45px;
-            background-color: #3b82f6; /* Bright Blue */
-            border: 4px solid #1e3a8a;
+            width: 50px;
+            height: 50px;
+            background-color: #3b82f6;
+            border: 5px solid #1e3a8a;
             border-radius: 50%;
             position: absolute;
             cursor: pointer;
             user-select: none;
-            transition: transform 0.4s ease, background-color 0.3s ease, left 0.6s ease, top 0.6s ease;
+            transition: transform 0.3s ease, background-color 0.3s ease, left 0.8s ease, top 0.8s ease;
             z-index: 10;
         }
 
         .dot.counted {
-            background-color: #22c55e; /* Bright Success Green */
+            background-color: #22c55e;
             border-color: #14532d;
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
         .digit { 
-            font-size: 160px; 
+            font-size: 180px; 
             font-weight: 700; 
-            color: #1e3a8a; 
+            color: #064e3b; 
+            line-height: 1;
             margin: 0; 
         }
 
         .btn {
             margin-top: 15px;
-            padding: 15px 35px;
-            font-size: 20px;
+            padding: 15px 40px;
+            font-size: 22px;
             font-weight: 700;
             background: #2563eb;
             color: white;
             border: none;
-            border-radius: 16px;
+            border-radius: 20px;
             cursor: pointer;
             font-family: 'Lexend', sans-serif;
+            box-shadow: 0 4px 0 #1d4ed8;
         }
 
-        .reset-btn { background: #059669; }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1d4ed8;
+        }
+
+        .reset-btn { 
+            background: #10b981; 
+            box-shadow: 0 4px 0 #047857;
+        }
     </style>
 </head>
 <body>
 
+    <div class="zoo-header">
+        <span>🦁</span><span>🐯</span><span>🐘</span><span>🦛</span>
+    </div>
+
     <div class="instructions" id="inst">
-        Count the blue dots. Tap them to turn them green!
+        Tap the dots to count! 🦁
     </div>
 
     <div class="card-container" id="gameCard">
         <div class="card-inner">
             <div class="card-face card-front">
                 <div id="object-area"></div>
-                <button class="btn" id="flipBtn">I'm Done Counting!</button>
+                <button class="btn" id="flipBtn">Done Counting!</button>
             </div>
 
             <div class="card-face card-back">
+                <div style="font-size: 50px;">🦁 Great Job!</div>
                 <div class="digit" id="numeral">0</div>
-                <button class="btn reset-btn" onclick="resetGame()">Next Level</button>
+                <button class="btn reset-btn" onclick="resetGame()">Play Again</button>
             </div>
         </div>
     </div>
@@ -160,13 +184,10 @@
         function initLevel() {
             card.classList.remove('is-flipped');
             objectArea.innerHTML = '';
-            
-            // Random number 1-20
             currentCount = Math.floor(Math.random() * 20) + 1;
             numeralDisplay.innerText = currentCount;
 
-            // Give extra padding so dots don't hit the edges
-            const padding = 60;
+            const padding = 70;
             const areaW = objectArea.offsetWidth - padding;
             const areaH = objectArea.offsetHeight - padding;
 
@@ -174,18 +195,15 @@
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 
-                // Layout logic
                 if (currentCount <= 10) {
-                    // Scattered
-                    dot.style.left = (Math.random() * areaW) + (padding/4) + 'px';
-                    dot.style.top = (Math.random() * areaH) + (padding/4) + 'px';
+                    dot.style.left = (Math.random() * areaW) + (padding/2) + 'px';
+                    dot.style.top = (Math.random() * areaH) + (padding/2) + 'px';
                 } else {
-                    // Array/Grid for higher numbers
                     const cols = 5;
-                    const spacingX = areaW / 4.5;
-                    const spacingY = areaH / 3.5;
-                    dot.style.left = (i % cols) * spacingX + 25 + 'px';
-                    dot.style.top = Math.floor(i / cols) * spacingY + 25 + 'px';
+                    const spacingX = areaW / 4.2;
+                    const spacingY = areaH / 3.2;
+                    dot.style.left = (i % cols) * spacingX + 35 + 'px';
+                    dot.style.top = Math.floor(i / cols) * spacingY + 35 + 'px';
                 }
 
                 dot.onclick = (e) => {
@@ -198,22 +216,21 @@
         }
 
         function shuffleAndReveal() {
-            inst.innerText = "The dots moved! Is the number still the same?";
+            inst.innerText = "The dots moved! Is it still " + currentCount + "?";
             
             const dots = document.querySelectorAll('.dot');
-            const padding = 60;
+            const padding = 70;
             const areaW = objectArea.offsetWidth - padding;
             const areaH = objectArea.offsetHeight - padding;
 
-            // Rearrangement (Requirement of the standard)
             dots.forEach(dot => {
-                dot.style.left = (Math.random() * areaW) + (padding/4) + 'px';
-                dot.style.top = (Math.random() * areaH) + (padding/4) + 'px';
+                dot.style.left = (Math.random() * areaW) + (padding/2) + 'px';
+                dot.style.top = (Math.random() * areaH) + (padding/2) + 'px';
             });
 
             setTimeout(() => {
                 card.classList.add('is-flipped');
-                inst.innerText = "There are still " + currentCount + " dots!";
+                inst.innerText = "There are " + currentCount + "! 🦁";
             }, 1200);
         }
 
@@ -223,14 +240,11 @@
         });
 
         function resetGame() {
-            inst.innerText = "Count the blue dots. Tap them to turn them green!";
+            inst.innerText = "Tap the dots to count! 🦁";
             initLevel();
         }
 
-        // Initialize on load
         window.onload = initLevel;
-
-        // Re-init on window resize to fix positioning if user rotates device
         window.onresize = initLevel;
     </script>
 </body>
