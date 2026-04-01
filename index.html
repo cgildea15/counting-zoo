@@ -17,6 +17,7 @@
             margin: 0;
             padding: 20px;
             color: #1e293b;
+            touch-action: manipulation; /* Prevents accidental zooming on double taps */
         }
 
         .instructions {
@@ -28,20 +29,19 @@
             text-align: center;
             font-size: 1.2rem;
             max-width: 600px;
+            border: 2px solid #e2e8f0;
         }
 
-        /* 1) LANDSCAPE FORM: Wider for easier tapping */
         .card-container {
             width: 550px; 
             height: 400px;
             perspective: 1200px;
         }
 
-        /* Mobile adjustment to keep it responsive but still landscape-ratio */
         @media (max-width: 600px) {
             .card-container {
-                width: 95vw;
-                height: 70vw;
+                width: 90vw;
+                height: 110vw; /* Flips to portrait-ish on small phones for better fit */
             }
         }
 
@@ -84,31 +84,31 @@
             background: #ffffff;
             border: 2px dashed #cbd5e1;
             border-radius: 20px;
-            overflow: hidden;
+            overflow: hidden; /* Keeps dots inside the pen */
         }
 
-        /* 3) LION EMOJIS */
-        .lion {
-            font-size: 45px; /* Larger for motor skill ease */
+        /* DOT STYLING - High Visibility */
+        .dot {
+            width: 45px;
+            height: 45px;
+            background-color: #3b82f6; /* Bright Blue */
+            border: 4px solid #1e3a8a;
+            border-radius: 50%;
             position: absolute;
             cursor: pointer;
             user-select: none;
-            transition: transform 0.5s ease, background 0.3s ease;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
+            transition: transform 0.4s ease, background-color 0.3s ease, left 0.6s ease, top 0.6s ease;
+            z-index: 10;
         }
 
-        .lion.counted {
-            background-color: #86efac; /* Soft green indicator */
+        .dot.counted {
+            background-color: #22c55e; /* Bright Success Green */
+            border-color: #14532d;
             transform: scale(1.1);
         }
 
         .digit { 
-            font-size: 180px; 
+            font-size: 160px; 
             font-weight: 700; 
             color: #1e3a8a; 
             margin: 0; 
@@ -124,29 +124,28 @@
             border: none;
             border-radius: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-family: 'Lexend', sans-serif;
         }
 
-        .btn:active { transform: scale(0.98); }
         .reset-btn { background: #059669; }
     </style>
 </head>
 <body>
 
     <div class="instructions" id="inst">
-        Tap each 🦁 to count them!
+        Count the blue dots. Tap them to turn them green!
     </div>
 
     <div class="card-container" id="gameCard">
         <div class="card-inner">
             <div class="card-face card-front">
                 <div id="object-area"></div>
-                <button class="btn" id="flipBtn">Done Counting!</button>
+                <button class="btn" id="flipBtn">I'm Done Counting!</button>
             </div>
 
             <div class="card-face card-back">
                 <div class="digit" id="numeral">0</div>
-                <button class="btn reset-btn" onclick="resetGame()">Next Group</button>
+                <button class="btn reset-btn" onclick="resetGame()">Next Level</button>
             </div>
         </div>
     </div>
@@ -161,53 +160,78 @@
         function initLevel() {
             card.classList.remove('is-flipped');
             objectArea.innerHTML = '';
+            
+            // Random number 1-20
             currentCount = Math.floor(Math.random() * 20) + 1;
             numeralDisplay.innerText = currentCount;
 
-            const isScattered = currentCount <= 10;
-            const areaW = objectArea.clientWidth - 70;
-            const areaH = objectArea.clientHeight - 70;
+            // Give extra padding so dots don't hit the edges
+            const padding = 60;
+            const areaW = objectArea.offsetWidth - padding;
+            const areaH = objectArea.offsetHeight - padding;
 
             for (let i = 0; i < currentCount; i++) {
-                const lion = document.createElement('div');
-                lion.className = 'lion';
-                lion.innerText = '🦁';
+                const dot = document.createElement('div');
+                dot.className = 'dot';
                 
-                if (isScattered) {
-                    lion.style.left = Math.random() * areaW + 'px';
-                    lion.style.top = Math.random() * areaH + 'px';
+                // Layout logic
+                if (currentCount <= 10) {
+                    // Scattered
+                    dot.style.left = (Math.random() * areaW) + (padding/4) + 'px';
+                    dot.style.top = (Math.random() * areaH) + (padding/4) + 'px';
                 } else {
+                    // Array/Grid for higher numbers
                     const cols = 5;
                     const spacingX = areaW / 4.5;
                     const spacingY = areaH / 3.5;
-                    lion.style.left = (i % cols) * spacingX + 15 + 'px';
-                    lion.style.top = Math.floor(i / cols) * spacingY + 15 + 'px';
+                    dot.style.left = (i % cols) * spacingX + 25 + 'px';
+                    dot.style.top = Math.floor(i / cols) * spacingY + 25 + 'px';
                 }
 
-                lion.onclick = (e) => {
+                dot.onclick = (e) => {
                     e.stopPropagation();
-                    lion.classList.toggle('counted');
+                    dot.classList.toggle('counted');
                 };
                 
-                objectArea.appendChild(lion);
+                objectArea.appendChild(dot);
             }
         }
 
         function shuffleAndReveal() {
-            inst.innerText = "The lions moved! How many are there now?";
-            const lions = document.querySelectorAll('.lion');
-            const areaW = objectArea.clientWidth - 70;
-            const areaH = objectArea.clientHeight - 70;
+            inst.innerText = "The dots moved! Is the number still the same?";
+            
+            const dots = document.querySelectorAll('.dot');
+            const padding = 60;
+            const areaW = objectArea.offsetWidth - padding;
+            const areaH = objectArea.offsetHeight - padding;
 
-            lions.forEach(lion => {
-                lion.style.left = Math.random() * areaW + 'px';
-                lion.style.top = Math.random() * areaH + 'px';
+            // Rearrangement (Requirement of the standard)
+            dots.forEach(dot => {
+                dot.style.left = (Math.random() * areaW) + (padding/4) + 'px';
+                dot.style.top = (Math.random() * areaH) + (padding/4) + 'px';
             });
 
             setTimeout(() => {
                 card.classList.add('is-flipped');
-                inst.innerText = "There are still " + currentCount + " lions!";
-            }, 1000);
+                inst.innerText = "There are still " + currentCount + " dots!";
+            }, 1200);
         }
 
-        document.getElementById('flipBtn').addEventListener('
+        document.getElementById('flipBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            shuffleAndReveal();
+        });
+
+        function resetGame() {
+            inst.innerText = "Count the blue dots. Tap them to turn them green!";
+            initLevel();
+        }
+
+        // Initialize on load
+        window.onload = initLevel;
+
+        // Re-init on window resize to fix positioning if user rotates device
+        window.onresize = initLevel;
+    </script>
+</body>
+</html>
