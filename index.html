@@ -3,138 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Counting Zoo | Florida B.E.S.T. K-Math</title>
+    <title>Counting Zoo | ThresholdEd</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* 1. LAYOUT & CENTERING */
         body {
             font-family: 'Lexend', sans-serif;
             background-color: #f0f9ff;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Centering for PC */
-            justify-content: center; /* Centering for Mobile */
+            align-items: center;
             min-height: 100vh;
             margin: 0;
             padding: 10px;
-            color: #1e293b;
-            touch-action: manipulation; /* Prevents zooming when tapping dots */
+            touch-action: none; /* Required for the tracing canvas */
             overflow: hidden;
         }
 
-        .zoo-header {
-            font-size: clamp(2rem, 8vw, 3.5rem);
-            margin-bottom: 10px;
-            display: flex;
-            gap: 15px;
-        }
+        .zoo-header { font-size: 3rem; margin: 10px 0; }
 
-        /* 2. RESPONSIVE BOXES */
         .instructions {
             background: #ffffff;
             padding: 15px;
             border-radius: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
             text-align: center;
-            font-size: clamp(1.1rem, 4vw, 1.5rem);
-            width: 95%;
-            max-width: 550px;
-            border: 3px solid #3b82f6;
+            font-size: 1.3rem;
+            width: 90%;
+            max-width: 500px;
+            border: 4px solid #3b82f6;
             font-weight: 700;
-            box-sizing: border-box;
         }
 
         .card-container {
             width: 95%;
-            max-width: 550px;
-            aspect-ratio: 4 / 3; /* Maintains the same rectangle shape on all devices */
-            perspective: 1200px;
-        }
-
-        .card-inner {
+            max-width: 500px;
+            aspect-ratio: 1 / 1; /* Square for better tracing space */
             position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d;
         }
 
-        .card-container.is-flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card-face {
-            position: absolute;
+        .game-box {
             width: 100%;
             height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 30px;
             background: white;
             border: 8px solid #3b82f6;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-
-        .card-back {
-            transform: rotateY(180deg);
-            background-color: #ecfdf5;
-            border-color: #10b981;
-        }
-
-        /* 3. THE DOT CAGE */
-        #object-area {
+            border-radius: 30px;
             position: relative;
-            width: 90%;
-            height: 70%;
-            background: #ffffff;
-            border-radius: 20px;
-            overflow: hidden; /* This is the safety net */
-            border: 2px dashed #cbd5e1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        #object-area { position: absolute; width: 100%; height: 100%; }
 
         .dot {
-            width: clamp(35px, 10vw, 55px); /* Dots scale with screen size */
-            height: clamp(35px, 10vw, 55px);
+            width: 55px;
+            height: 55px;
             background-color: #3b82f6;
             border: 4px solid #1e3a8a;
             border-radius: 50%;
             position: absolute;
-            cursor: pointer;
-            transition: transform 0.2s, left 0.6s ease, top 0.6s ease;
+            transition: left 0.8s ease, top 0.8s ease;
             z-index: 10;
         }
 
-        .dot.counted {
-            background-color: #22c55e;
-            border-color: #14532d;
-            transform: scale(1.1);
+        .dot.counted { background-color: #22c55e; border-color: #14532d; }
+
+        /* Tracing Styles */
+        #trace-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            display: none; /* Hidden until counting is done */
         }
 
-        .digit { 
-            font-size: clamp(100px, 25vw, 180px); 
-            font-weight: 700; 
-            color: #064e3b; 
+        .trace-prompt {
+            position: absolute;
+            font-size: 180px;
+            color: rgba(0, 0, 0, 0.1); /* Dotted/Light effect */
+            border: 5px dotted #cbd5e1;
+            padding: 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            user-select: none;
+            display: none;
         }
 
         .btn {
-            margin-top: 15px;
-            padding: 12px 30px;
-            font-size: 1.2rem;
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
             font-weight: 700;
             background: #2563eb;
             color: white;
+            border-radius: 20px;
             border: none;
-            border-radius: 15px;
+            box-shadow: 0 5px 0 #1d4ed8;
             cursor: pointer;
-            box-shadow: 0 4px 0 #1d4ed8;
+            z-index: 30;
         }
 
-        .reset-btn { background: #10b981; box-shadow: 0 4px 0 #047857; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -143,19 +113,16 @@
 
     <div class="instructions" id="inst">Tap the dots to count! 🦁</div>
 
-    <div class="card-container" id="gameCard">
-        <div class="card-inner">
-            <div class="card-face card-front">
-                <div id="object-area"></div>
-                <button class="btn" id="flipBtn">Done Counting!</button>
-            </div>
-            <div class="card-face card-back">
-                <div style="font-size: 1.5rem;">🦁 Great Job!</div>
-                <div class="digit" id="numeral">0</div>
-                <button class="btn reset-btn" onclick="resetGame()">Play Again</button>
-            </div>
+    <div class="card-container">
+        <div class="game-box" id="mainBox">
+            <div id="object-area"></div>
+            <div id="trace-template" class="trace-prompt">0</div>
+            <canvas id="trace-canvas"></canvas>
         </div>
     </div>
+
+    <button class="btn" id="checkBtn">Check ✅</button>
+    <button class="btn hidden" id="nextBtn">Next Level ➡️</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -173,73 +140,107 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const objectArea = document.getElementById('object-area');
-        const card = document.getElementById('gameCard');
-        const numeralDisplay = document.getElementById('numeral');
+        const area = document.getElementById('object-area');
         const inst = document.getElementById('inst');
-        let currentCount = 0;
+        const checkBtn = document.getElementById('checkBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const traceTemplate = document.getElementById('trace-template');
+        const canvas = document.getElementById('trace-canvas');
+        const ctx = canvas.getContext('2d');
 
-        // Save progress to your dashboard
-        async function recordProgress(count) {
-            try {
-                await addDoc(collection(db, "student_progress"), {
-                    benchmark_id: "MA.K.NSO.1.1",
-                    value_counted: count,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) { console.error(e); }
-        }
+        let count = 0;
+        let isTracing = false;
 
         function initLevel() {
-            card.classList.remove('is-flipped');
-            objectArea.innerHTML = '';
-            currentCount = Math.floor(Math.random() * 15) + 1; // Limit to 15 for better mobile fit
-            numeralDisplay.innerText = currentCount;
-
-            // Accurate measurements of the "Cage"
-            const areaW = objectArea.clientWidth;
-            const areaH = objectArea.clientHeight;
-            const dotSize = areaW * 0.12; 
-
-            for (let i = 0; i < currentCount; i++) {
+            area.innerHTML = '';
+            count = Math.floor(Math.random() * 10) + 1; // Keeping it to 10 for tracing clarity
+            traceTemplate.innerText = count;
+            
+            // Layout dots with "Social Distancing" to avoid clumping
+            const positions = [];
+            for (let i = 0; i < count; i++) {
+                let pos;
+                let overlap = true;
+                while(overlap) {
+                    pos = { x: Math.random() * 80 + 5, y: Math.random() * 80 + 5 };
+                    overlap = positions.some(p => Math.abs(p.x - pos.x) < 12 && Math.abs(p.y - pos.y) < 12);
+                }
+                positions.push(pos);
+                
                 const dot = document.createElement('div');
                 dot.className = 'dot';
-                
-                // Safe placement math: Keeps dots at least 5% away from edges
-                const maxX = areaW - dotSize - (areaW * 0.05);
-                const maxY = areaH - dotSize - (areaH * 0.05);
-                
-                dot.style.left = (Math.random() * maxX + (areaW * 0.02)) + 'px';
-                dot.style.top = (Math.random() * maxY + (areaH * 0.02)) + 'px';
-
-                dot.onclick = (e) => {
-                    e.stopPropagation();
-                    dot.classList.toggle('counted');
-                };
-                objectArea.appendChild(dot);
+                dot.style.left = pos.x + '%';
+                dot.style.top = pos.y + '%';
+                dot.onclick = () => dot.classList.toggle('counted');
+                area.appendChild(dot);
             }
         }
 
-        function shuffleAndReveal() {
-            inst.innerText = "The dots moved! Still " + currentCount + "?";
-            const dots = document.querySelectorAll('.dot');
+        function startRearrangement() {
+            checkBtn.classList.add('hidden');
+            inst.innerText = "The animals moved! Are there still " + count + "?";
             
-            dots.forEach(dot => {
-                const maxX = objectArea.clientWidth - (objectArea.clientWidth * 0.15);
-                const maxY = objectArea.clientHeight - (objectArea.clientHeight * 0.15);
-                dot.style.left = (Math.random() * maxX) + 'px';
-                dot.style.top = (Math.random() * maxY) + 'px';
+            // Rearrange dots
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach(d => {
+                d.style.left = (Math.random() * 80 + 5) + '%';
+                d.style.top = (Math.random() * 80 + 5) + '%';
             });
 
+            // WAIT 5 SECONDS (Teacher's requirement for processing)
             setTimeout(() => {
-                card.classList.add('is-flipped');
-                inst.innerText = "Correct! It is " + currentCount + ".";
-                recordProgress(currentCount);
-            }, 1000);
+                showTracingMode();
+            }, 5000);
         }
 
-        document.getElementById('flipBtn').addEventListener('click', shuffleAndReveal);
-        window.resetGame = () => { inst.innerText = "Tap the dots to count! 🦁"; initLevel(); };
+        function showTracingMode() {
+            inst.innerText = "Correct! Now trace the number " + count + " ✍️";
+            traceTemplate.style.display = 'block';
+            canvas.style.display = 'block';
+            resizeCanvas();
+            setupTracing();
+            nextBtn.classList.remove('hidden');
+            
+            // Log to Firebase
+            addDoc(collection(db, "student_progress"), {
+                benchmark: "MA.K.NSO.1.1",
+                value: count,
+                timestamp: serverTimestamp()
+            });
+        }
+
+        // --- TRACING LOGIC ---
+        function setupTracing() {
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, 
+                         y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top };
+            };
+
+            const start = (e) => { isTracing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+            const draw = (e) => { if(!isTracing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+            const stop = () => { isTracing = false; };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stop);
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        checkBtn.onclick = startRearrangement;
+        nextBtn.onclick = () => location.reload();
+
         window.onload = initLevel;
     </script>
 </body>
