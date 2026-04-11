@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Counting Zoo v2.0 | ThresholdEd</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Counting Zoo v2.1 | ThresholdEd</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
     <style>
         body {
             font-family: 'Lexend', sans-serif;
@@ -14,33 +13,36 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh; /* Fixed height to prevent scrolling */
             margin: 0;
             padding: 10px;
             touch-action: none;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
-        .zoo-header { font-size: 2.2rem; margin: 5px 0; }
+        .zoo-header { font-size: 2rem; margin: 5px 0; flex-shrink: 0; }
 
         .instructions {
             background: #ffffff;
-            padding: 12px;
+            padding: 10px;
             border-radius: 20px;
             margin-bottom: 10px;
             text-align: center;
             font-size: 1.1rem;
-            width: 90%;
+            width: 95%;
             max-width: 450px;
             border: 4px solid #3b82f6;
             font-weight: 700;
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
-        /* Forced Vertical Layout for Mobile */
+        /* 1. FLEXIBLE CONTAINER: Fills space without pushing buttons out */
         .card-container {
             width: 95%;
             max-width: 400px;
-            height: 70vh; 
+            flex: 1; /* Takes up all available middle space */
             position: relative;
             background: white;
             border: 8px solid #3b82f6;
@@ -48,12 +50,18 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin-bottom: 10px;
         }
 
-        #object-area { flex: 1; position: relative; width: 100%; background: #fafafa; }
+        #object-area { 
+            flex: 1; 
+            position: relative; 
+            width: 100%;
+            background: #fafafa;
+        }
 
         #trace-area {
-            flex: 1.3;
+            flex: 1;
             display: none; 
             position: relative;
             background: #ffffff;
@@ -74,10 +82,10 @@
 
         #trace-canvas { position: absolute; top: 0; left: 0; z-index: 25; }
 
-        /* Pedagogical Straight-Line Numerals */
         .trace-prompt {
-            font-family: "Trebuchet MS", "Verdana", Arial, sans-serif;
-            font-size: 190px;
+            /* Forced stack for Samsung straight 1s */
+            font-family: "Trebuchet MS", "Helvetica", sans-serif;
+            font-size: clamp(120px, 30vw, 180px);
             color: rgba(0, 0, 0, 0.05);
             -webkit-text-stroke: 4px #cbd5e1;
             font-weight: 400;
@@ -86,8 +94,7 @@
         }
 
         .btn {
-            margin-top: 15px;
-            padding: 15px 40px;
+            padding: 15px 45px;
             font-size: 1.4rem;
             font-weight: 700;
             background: #2563eb;
@@ -96,6 +103,9 @@
             border: none;
             box-shadow: 0 5px 0 #1d4ed8;
             cursor: pointer;
+            flex-shrink: 0;
+            margin-bottom: 15px; /* Ensures it clears the bottom nav bar */
+            z-index: 50;
         }
         .hidden { display: none !important; }
     </style>
@@ -133,23 +143,30 @@
             area.innerHTML = '';
             count = Math.floor(Math.random() * 20) + 1; 
             traceTemplate.innerText = count;
-            const dotSize = (count > 10) ? 30 : 45;
+            
+            const dotSize = (count > 10) ? 32 : 48;
             const positions = [];
 
             for (let i = 0; i < count; i++) {
                 let pos;
                 let isTooClose = true;
                 let attempts = 0;
-                while(isTooClose && attempts < 150) {
+
+                while(isTooClose && attempts < 200) {
                     pos = { x: Math.random() * 80 + 10, y: Math.random() * 80 + 10 };
-                    isTooClose = positions.some(p => Math.sqrt(Math.pow(p.x - pos.x, 2) + Math.pow(p.y - pos.y, 2)) < 18);
+                    isTooClose = positions.some(p => 
+                        Math.sqrt(Math.pow(p.x - pos.x, 2) + Math.pow(p.y - pos.y, 2)) < 16
+                    );
                     attempts++;
                 }
                 positions.push(pos);
+
                 const dot = document.createElement('div');
                 dot.className = 'dot';
-                dot.style.width = dotSize + 'px'; dot.style.height = dotSize + 'px';
-                dot.style.left = pos.x + '%'; dot.style.top = pos.y + '%';
+                dot.style.width = dotSize + 'px';
+                dot.style.height = dotSize + 'px';
+                dot.style.left = pos.x + '%';
+                dot.style.top = pos.y + '%';
                 dot.onclick = () => dot.classList.toggle('counted');
                 area.appendChild(dot);
             }
@@ -158,19 +175,24 @@
         function rearrangeIntoGroups() {
             checkBtn.classList.add('hidden');
             inst.innerText = "Still " + count + "! Now trace it. ✍️";
+            
             const dots = Array.from(document.querySelectorAll('.dot'));
             const groupSize = 5;
-            const dotSize = (count > 10) ? 28 : 38;
+            const dotSize = (count > 10) ? 28 : 40;
 
             dots.forEach((d, i) => {
-                d.style.width = dotSize + 'px'; d.style.height = dotSize + 'px';
+                d.style.width = dotSize + 'px';
+                d.style.height = dotSize + 'px';
                 const groupIndex = Math.floor(i / groupSize);
                 const itemInGroup = i % groupSize;
                 const col = itemInGroup % 3;
                 const row = Math.floor(itemInGroup / 3);
+                
                 const xPos = (groupIndex % 2) * 45 + (col * 10) + 15;
-                const yPos = Math.floor(groupIndex / 2) * 35 + (row * 10) + 10;
-                d.style.left = xPos + '%'; d.style.top = yPos + '%';
+                const yPos = Math.floor(groupIndex / 2) * 20 + (row * 6) + 5;
+                
+                d.style.left = xPos + '%';
+                d.style.top = yPos + '%';
             });
 
             setTimeout(() => {
@@ -179,19 +201,26 @@
                 canvas.height = traceArea.clientHeight;
                 setupTracing();
                 nextBtn.classList.remove('hidden');
-            }, 5000); // Pedagogical Pause
+            }, 5000);
         }
 
         function setupTracing() {
-            ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 14;
+            ctx.lineCap = 'round';
             const getPos = (e) => {
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 return { x: clientX - rect.left, y: clientY - rect.top };
             };
-            canvas.onmousedown = canvas.ontouchstart = (e) => { e.preventDefault(); isTracing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-            window.onmousemove = window.ontouchmove = (e) => { if(!isTracing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+            canvas.onmousedown = canvas.ontouchstart = (e) => { 
+                e.preventDefault(); isTracing = true; ctx.beginPath(); 
+                const p = getPos(e); ctx.moveTo(p.x, p.y); 
+            };
+            window.onmousemove = window.ontouchmove = (e) => { 
+                if(!isTracing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); 
+            };
             window.onmouseup = window.ontouchend = () => { isTracing = false; };
         }
 
