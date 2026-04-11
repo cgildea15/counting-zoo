@@ -19,15 +19,17 @@
             overflow: hidden;
         }
 
-        /* 1. PEDAGOGICAL FONT FIX: Using a clean serif-free style for numerals */
+        /* 1. PEDAGOGICAL FONT FIX: Force simple, straight numeral lines */
         .trace-prompt {
-            font-family: 'Courier New', Courier, monospace; /* Ensures '1' is a straight line */
-            font-size: 240px;
-            color: rgba(0, 0, 0, 0.05);
-            -webkit-text-stroke: 4px #cbd5e1;
+            /* This font combo ensures '1' is just a line and '7' has no serif */
+            font-family: 'Courier New', 'Courier', 'monospace'; 
+            font-size: 250px; /* Large for clear tracing */
+            color: rgba(0, 0, 0, 0.05); /* Very light 'dotted' guide */
+            -webkit-text-stroke: 4px #cbd5e1; /* The outline they will trace */
             font-weight: 900;
             pointer-events: none;
             text-align: center;
+            letter-spacing: -5px; /* Keeps multi-digit numbers close */
         }
 
         .zoo-header { font-size: clamp(2rem, 8vw, 3rem); margin: 10px 0; }
@@ -120,6 +122,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Your specific config
         const firebaseConfig = {
             apiKey: "AIzaSyDP9TrLurt53v4dFAdCc60h0Dszitbym3w",
             authDomain: "sample-deals-app.firebaseapp.com",
@@ -147,9 +150,10 @@
 
         function initLevel() {
             area.innerHTML = '';
+            // Standard MA.K.NSO.1.1 upper limit is 20
             count = Math.floor(Math.random() * 20) + 1; 
             traceTemplate.innerText = count;
-            dotDiameter = (count > 10) ? 32 : 45;
+            dotDiameter = (count > 10) ? 32 : 45; // Smarter scaling for larger groups
 
             for (let i = 0; i < count; i++) {
                 const dot = document.createElement('div');
@@ -168,6 +172,7 @@
             inst.innerText = "The animals moved! Are there still " + count + "?";
             
             const dots = Array.from(document.querySelectorAll('.dot'));
+            // Standard pedagogical subitizing group sizes
             const groupSizes = [5, 3, 2];
             let remaining = count;
             let dotIndex = 0;
@@ -193,7 +198,7 @@
                 }
             });
 
-            // 5 SECOND PAUSE for Standard-aligned Processing
+            // 5 SECOND PAUSE for Standard-aligned Processing (rearrangement recognition)
             setTimeout(() => { showTracingMode(); }, 5000);
         }
 
@@ -205,6 +210,7 @@
             setupTracing();
             nextBtn.classList.remove('hidden');
 
+            // Log telemetry to Firebase
             addDoc(collection(db, "student_progress"), {
                 benchmark: "MA.K.NSO.1.1",
                 value: count,
@@ -213,7 +219,7 @@
         }
 
         function setupTracing() {
-            ctx.strokeStyle = '#2563eb';
+            ctx.strokeStyle = '#2563eb'; // High contrast blue line
             ctx.lineWidth = 14;
             ctx.lineCap = 'round';
             const getPos = (e) => {
@@ -233,7 +239,7 @@
         }
 
         checkBtn.onclick = rearrangeIntoGroups;
-        nextBtn.onclick = () => location.reload();
+        nextBtn.onclick = () => location.reload(); // Simple next level reset
         window.onload = initLevel;
     </script>
 </body>
