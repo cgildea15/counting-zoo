@@ -2,56 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Counting Zoo | Florida B.E.S.T. K-Math</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* 1. LAYOUT & CENTERING */
         body {
             font-family: 'Lexend', sans-serif;
             background-color: #f0f9ff;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            align-items: center; /* Centering for PC */
+            justify-content: center; /* Centering for Mobile */
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             color: #1e293b;
-            touch-action: manipulation;
+            touch-action: manipulation; /* Prevents zooming when tapping dots */
+            overflow: hidden;
         }
 
         .zoo-header {
-            font-size: 3rem;
+            font-size: clamp(2rem, 8vw, 3.5rem);
             margin-bottom: 10px;
             display: flex;
             gap: 15px;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
         }
 
+        /* 2. RESPONSIVE BOXES */
         .instructions {
             background: #ffffff;
-            padding: 15px 25px;
+            padding: 15px;
             border-radius: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             text-align: center;
-            font-size: 1.4rem;
-            max-width: 600px;
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            width: 95%;
+            max-width: 550px;
             border: 3px solid #3b82f6;
             font-weight: 700;
+            box-sizing: border-box;
         }
 
         .card-container {
-            width: 550px; 
-            height: 400px;
+            width: 95%;
+            max-width: 550px;
+            aspect-ratio: 4 / 3; /* Maintains the same rectangle shape on all devices */
             perspective: 1200px;
-        }
-
-        @media (max-width: 600px) {
-            .card-container {
-                width: 90vw;
-                height: 110vw;
-            }
         }
 
         .card-inner {
@@ -75,10 +73,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 40px;
+            border-radius: 30px;
             background: white;
-            border: 10px solid #3b82f6;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            border: 8px solid #3b82f6;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
 
         .card-back {
@@ -87,76 +86,62 @@
             border-color: #10b981;
         }
 
+        /* 3. THE DOT CAGE */
         #object-area {
             position: relative;
-            width: 92%;
-            height: 72%;
+            width: 90%;
+            height: 70%;
             background: #ffffff;
-            border-radius: 25px;
-            overflow: hidden;
+            border-radius: 20px;
+            overflow: hidden; /* This is the safety net */
+            border: 2px dashed #cbd5e1;
         }
 
         .dot {
-            width: 50px;
-            height: 50px;
+            width: clamp(35px, 10vw, 55px); /* Dots scale with screen size */
+            height: clamp(35px, 10vw, 55px);
             background-color: #3b82f6;
-            border: 5px solid #1e3a8a;
+            border: 4px solid #1e3a8a;
             border-radius: 50%;
             position: absolute;
             cursor: pointer;
-            user-select: none;
-            transition: transform 0.3s ease, background-color 0.3s ease, left 0.8s ease, top 0.8s ease;
+            transition: transform 0.2s, left 0.6s ease, top 0.6s ease;
             z-index: 10;
         }
 
         .dot.counted {
             background-color: #22c55e;
             border-color: #14532d;
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
         .digit { 
-            font-size: 180px; 
+            font-size: clamp(100px, 25vw, 180px); 
             font-weight: 700; 
             color: #064e3b; 
-            line-height: 1;
-            margin: 0; 
         }
 
         .btn {
             margin-top: 15px;
-            padding: 15px 40px;
-            font-size: 22px;
+            padding: 12px 30px;
+            font-size: 1.2rem;
             font-weight: 700;
             background: #2563eb;
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 15px;
             cursor: pointer;
-            font-family: 'Lexend', sans-serif;
             box-shadow: 0 4px 0 #1d4ed8;
         }
 
-        .btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #1d4ed8;
-        }
-
-        .reset-btn { 
-            background: #10b981; 
-            box-shadow: 0 4px 0 #047857;
-        }
+        .reset-btn { background: #10b981; box-shadow: 0 4px 0 #047857; }
     </style>
 </head>
 <body>
 
-    <div class="zoo-header">
-        <span>🦁</span><span>🐯</span><span>🐘</span><span>🦛</span>
-    </div>
+    <div class="zoo-header">🦁🐯🐘🦛</div>
 
-    <div class="instructions" id="inst">
-        Tap the dots to count! 🦁
-    </div>
+    <div class="instructions" id="inst">Tap the dots to count! 🦁</div>
 
     <div class="card-container" id="gameCard">
         <div class="card-inner">
@@ -164,9 +149,8 @@
                 <div id="object-area"></div>
                 <button class="btn" id="flipBtn">Done Counting!</button>
             </div>
-
             <div class="card-face card-back">
-                <div style="font-size: 50px;">🦁 Great Job!</div>
+                <div style="font-size: 1.5rem;">🦁 Great Job!</div>
                 <div class="digit" id="numeral">0</div>
                 <button class="btn reset-btn" onclick="resetGame()">Play Again</button>
             </div>
@@ -189,96 +173,74 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- GAME LOGIC ---
         const objectArea = document.getElementById('object-area');
         const card = document.getElementById('gameCard');
         const numeralDisplay = document.getElementById('numeral');
         const inst = document.getElementById('inst');
         let currentCount = 0;
 
-        async function recordProgress(countValue) {
+        // Save progress to your dashboard
+        async function recordProgress(count) {
             try {
-                // This sends data to the 'student_progress' folder we unlocked in Rules
                 await addDoc(collection(db, "student_progress"), {
-                    benchmark_id: "MA.K.NSO.1.1", // Standard: Count to 20
-                    value_counted: countValue,
-                    timestamp: serverTimestamp(),
-                    status: "success"
+                    benchmark_id: "MA.K.NSO.1.1",
+                    value_counted: count,
+                    timestamp: serverTimestamp()
                 });
-                console.log("Progress saved to ThresholdEd Dashboard!");
-            } catch (e) {
-                console.error("Error saving progress: ", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function initLevel() {
             card.classList.remove('is-flipped');
             objectArea.innerHTML = '';
-            currentCount = Math.floor(Math.random() * 20) + 1;
+            currentCount = Math.floor(Math.random() * 15) + 1; // Limit to 15 for better mobile fit
             numeralDisplay.innerText = currentCount;
 
-            const padding = 70;
-            const areaW = objectArea.offsetWidth - padding;
-            const areaH = objectArea.offsetHeight - padding;
+            // Accurate measurements of the "Cage"
+            const areaW = objectArea.clientWidth;
+            const areaH = objectArea.clientHeight;
+            const dotSize = areaW * 0.12; 
 
             for (let i = 0; i < currentCount; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 
-                if (currentCount <= 10) {
-                    dot.style.left = (Math.random() * areaW) + (padding/2) + 'px';
-                    dot.style.top = (Math.random() * areaH) + (padding/2) + 'px';
-                } else {
-                    const cols = 5;
-                    const spacingX = areaW / 4.2;
-                    const spacingY = areaH / 3.2;
-                    dot.style.left = (i % cols) * spacingX + 35 + 'px';
-                    dot.style.top = Math.floor(i / cols) * spacingY + 35 + 'px';
-                }
+                // Safe placement math: Keeps dots at least 5% away from edges
+                const maxX = areaW - dotSize - (areaW * 0.05);
+                const maxY = areaH - dotSize - (areaH * 0.05);
+                
+                dot.style.left = (Math.random() * maxX + (areaW * 0.02)) + 'px';
+                dot.style.top = (Math.random() * maxY + (areaH * 0.02)) + 'px';
 
                 dot.onclick = (e) => {
                     e.stopPropagation();
                     dot.classList.toggle('counted');
                 };
-                
                 objectArea.appendChild(dot);
             }
         }
 
         function shuffleAndReveal() {
-            inst.innerText = "The dots moved! Is it still " + currentCount + "?";
-            
+            inst.innerText = "The dots moved! Still " + currentCount + "?";
             const dots = document.querySelectorAll('.dot');
-            const padding = 70;
-            const areaW = objectArea.offsetWidth - padding;
-            const areaH = objectArea.offsetHeight - padding;
-
+            
             dots.forEach(dot => {
-                dot.style.left = (Math.random() * areaW) + (padding/2) + 'px';
-                dot.style.top = (Math.random() * areaH) + (padding/2) + 'px';
+                const maxX = objectArea.clientWidth - (objectArea.clientWidth * 0.15);
+                const maxY = objectArea.clientHeight - (objectArea.clientHeight * 0.15);
+                dot.style.left = (Math.random() * maxX) + 'px';
+                dot.style.top = (Math.random() * maxY) + 'px';
             });
 
             setTimeout(() => {
                 card.classList.add('is-flipped');
-                inst.innerText = "There are " + currentCount + "! 🦁";
-                
-                // TELEMETRY: Record the success when the card flips
+                inst.innerText = "Correct! It is " + currentCount + ".";
                 recordProgress(currentCount);
-            }, 1200);
+            }, 1000);
         }
 
-        document.getElementById('flipBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            shuffleAndReveal();
-        });
-
-        window.resetGame = function() {
-            inst.innerText = "Tap the dots to count! 🦁";
-            initLevel();
-        }
-
+        document.getElementById('flipBtn').addEventListener('click', shuffleAndReveal);
+        window.resetGame = () => { inst.innerText = "Tap the dots to count! 🦁"; initLevel(); };
         window.onload = initLevel;
-        window.onresize = initLevel;
     </script>
 </body>
 </html>
