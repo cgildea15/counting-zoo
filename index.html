@@ -15,11 +15,11 @@
             min-height: 100vh;
             margin: 0;
             padding: 10px;
-            touch-action: none; /* Required for the tracing canvas */
+            touch-action: none;
             overflow: hidden;
         }
 
-        .zoo-header { font-size: 3rem; margin: 10px 0; }
+        .zoo-header { font-size: clamp(2rem, 8vw, 3rem); margin: 10px 0; }
 
         .instructions {
             background: #ffffff;
@@ -29,65 +29,61 @@
             text-align: center;
             font-size: 1.3rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 650px;
             border: 4px solid #3b82f6;
             font-weight: 700;
         }
 
         .card-container {
             width: 95%;
-            max-width: 500px;
-            aspect-ratio: 1 / 1; /* Square for better tracing space */
+            max-width: 750px;
+            aspect-ratio: 16 / 9; 
             position: relative;
-        }
-
-        .game-box {
-            width: 100%;
-            height: 100%;
             background: white;
             border: 8px solid #3b82f6;
             border-radius: 30px;
-            position: relative;
-            overflow: hidden;
             display: flex;
+            overflow: hidden;
+        }
+
+        #object-area { 
+            flex: 1.2; 
+            position: relative; 
+            height: 100%;
+            border-right: 2px dashed #cbd5e1;
+            transition: all 0.8s ease;
+            background: #fafafa;
+        }
+
+        #trace-area {
+            flex: 1;
+            display: none; 
+            position: relative;
+            background: #ffffff;
             align-items: center;
             justify-content: center;
         }
 
-        #object-area { position: absolute; width: 100%; height: 100%; }
-
         .dot {
-            width: 55px;
-            height: 55px;
+            width: 40px;
+            height: 40px;
             background-color: #3b82f6;
             border: 4px solid #1e3a8a;
             border-radius: 50%;
             position: absolute;
-            transition: left 0.8s ease, top 0.8s ease;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 10;
         }
-
         .dot.counted { background-color: #22c55e; border-color: #14532d; }
 
-        /* Tracing Styles */
-        #trace-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 20;
-            display: none; /* Hidden until counting is done */
-        }
+        #trace-canvas { position: absolute; top: 0; left: 0; z-index: 25; }
 
         .trace-prompt {
-            position: absolute;
-            font-size: 180px;
-            color: rgba(0, 0, 0, 0.1); /* Dotted/Light effect */
-            border: 5px dotted #cbd5e1;
-            padding: 20px;
-            border-radius: 20px;
+            font-size: 220px;
+            color: rgba(0, 0, 0, 0.05);
+            -webkit-text-stroke: 3px #cbd5e1;
+            font-weight: 700;
             pointer-events: none;
-            user-select: none;
-            display: none;
         }
 
         .btn {
@@ -101,9 +97,7 @@
             border: none;
             box-shadow: 0 5px 0 #1d4ed8;
             cursor: pointer;
-            z-index: 30;
         }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -111,11 +105,11 @@
 
     <div class="zoo-header">🦁🐯🐘🦛</div>
 
-    <div class="instructions" id="inst">Tap the dots to count! 🦁</div>
+    <div class="instructions" id="inst">Count the animals! 🦁</div>
 
     <div class="card-container">
-        <div class="game-box" id="mainBox">
-            <div id="object-area"></div>
+        <div id="object-area"></div>
+        <div id="trace-area">
             <div id="trace-template" class="trace-prompt">0</div>
             <canvas id="trace-canvas"></canvas>
         </div>
@@ -141,6 +135,7 @@
         const db = getFirestore(app);
 
         const area = document.getElementById('object-area');
+        const traceArea = document.getElementById('trace-area');
         const inst = document.getElementById('inst');
         const checkBtn = document.getElementById('checkBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -153,55 +148,62 @@
 
         function initLevel() {
             area.innerHTML = '';
-            count = Math.floor(Math.random() * 10) + 1; // Keeping it to 10 for tracing clarity
+            count = Math.floor(Math.random() * 20) + 1; 
             traceTemplate.innerText = count;
             
-            // Layout dots with "Social Distancing" to avoid clumping
-            const positions = [];
             for (let i = 0; i < count; i++) {
-                let pos;
-                let overlap = true;
-                while(overlap) {
-                    pos = { x: Math.random() * 80 + 5, y: Math.random() * 80 + 5 };
-                    overlap = positions.some(p => Math.abs(p.x - pos.x) < 12 && Math.abs(p.y - pos.y) < 12);
-                }
-                positions.push(pos);
-                
                 const dot = document.createElement('div');
                 dot.className = 'dot';
-                dot.style.left = pos.x + '%';
-                dot.style.top = pos.y + '%';
+                dot.style.left = (Math.random() * 85 + 5) + '%';
+                dot.style.top = (Math.random() * 80 + 5) + '%';
                 dot.onclick = () => dot.classList.toggle('counted');
                 area.appendChild(dot);
             }
         }
 
-        function startRearrangement() {
+        function rearrangeIntoGroups() {
             checkBtn.classList.add('hidden');
             inst.innerText = "The animals moved! Are there still " + count + "?";
             
-            // Rearrange dots
-            const dots = document.querySelectorAll('.dot');
-            dots.forEach(d => {
-                d.style.left = (Math.random() * 80 + 5) + '%';
-                d.style.top = (Math.random() * 80 + 5) + '%';
+            const dots = Array.from(document.querySelectorAll('.dot'));
+            const groupSizes = [5, 3, 2];
+            let remaining = count;
+            let dotIndex = 0;
+
+            // Logic to create clusters on the left side
+            const clusters = [];
+            while (remaining > 0) {
+                let size = groupSizes.find(s => s <= remaining) || 1;
+                clusters.push(size);
+                remaining -= size;
+            }
+
+            clusters.forEach((size, clusterIndex) => {
+                // Determine a "Center" for this group
+                const centerX = (Math.random() * 60 + 20); 
+                const centerY = (Math.random() * 60 + 20);
+
+                for (let i = 0; i < size; i++) {
+                    const d = dots[dotIndex++];
+                    // Offset the dot slightly from the center to form a visible group
+                    const offsetX = (i % 3) * 12;
+                    const offsetY = Math.floor(i / 3) * 12;
+                    d.style.left = (centerX + offsetX) + '%';
+                    d.style.top = (centerY + offsetY) + '%';
+                }
             });
 
-            // WAIT 5 SECONDS (Teacher's requirement for processing)
-            setTimeout(() => {
-                showTracingMode();
-            }, 5000);
+            setTimeout(() => { showTracingMode(); }, 5000);
         }
 
         function showTracingMode() {
-            inst.innerText = "Correct! Now trace the number " + count + " ✍️";
-            traceTemplate.style.display = 'block';
-            canvas.style.display = 'block';
-            resizeCanvas();
+            inst.innerText = "Still " + count + "! Now trace the number ✍️";
+            traceArea.style.display = 'flex';
+            canvas.width = traceArea.clientWidth;
+            canvas.height = traceArea.clientHeight;
             setupTracing();
             nextBtn.classList.remove('hidden');
-            
-            // Log to Firebase
+
             addDoc(collection(db, "student_progress"), {
                 benchmark: "MA.K.NSO.1.1",
                 value: count,
@@ -209,38 +211,28 @@
             });
         }
 
-        // --- TRACING LOGIC ---
         function setupTracing() {
             ctx.strokeStyle = '#2563eb';
-            ctx.lineWidth = 10;
+            ctx.lineWidth = 14;
             ctx.lineCap = 'round';
-
             const getPos = (e) => {
                 const rect = canvas.getBoundingClientRect();
-                return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, 
-                         y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top };
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
             };
-
-            const start = (e) => { isTracing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-            const draw = (e) => { if(!isTracing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-            const stop = () => { isTracing = false; };
-
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', draw);
-            window.addEventListener('mouseup', stop);
-            canvas.addEventListener('touchstart', start);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', stop);
+            canvas.onmousedown = canvas.ontouchstart = (e) => { 
+                e.preventDefault(); isTracing = true; ctx.beginPath(); 
+                const p = getPos(e); ctx.moveTo(p.x, p.y); 
+            };
+            window.onmousemove = window.ontouchmove = (e) => { 
+                if(!isTracing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); 
+            };
+            window.onmouseup = window.ontouchend = () => { isTracing = false; };
         }
 
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-        }
-
-        checkBtn.onclick = startRearrangement;
+        checkBtn.onclick = rearrangeIntoGroups;
         nextBtn.onclick = () => location.reload();
-
         window.onload = initLevel;
     </script>
 </body>
