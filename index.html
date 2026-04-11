@@ -20,7 +20,6 @@
             touch-action: manipulation;
         }
 
-        /* Zoo Header Styling */
         .zoo-header {
             font-size: 3rem;
             margin-bottom: 10px;
@@ -174,12 +173,43 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDP9TrLurt53v4dFAdCc60h0Dszitbym3w",
+            authDomain: "sample-deals-app.firebaseapp.com",
+            projectId: "sample-deals-app",
+            storageBucket: "sample-deals-app.firebasestorage.app",
+            messagingSenderId: "926143400812",
+            appId: "1:926143400812:web:7aa6083d269e4298424149"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- GAME LOGIC ---
         const objectArea = document.getElementById('object-area');
         const card = document.getElementById('gameCard');
         const numeralDisplay = document.getElementById('numeral');
         const inst = document.getElementById('inst');
         let currentCount = 0;
+
+        async function recordProgress(countValue) {
+            try {
+                // This sends data to the 'student_progress' folder we unlocked in Rules
+                await addDoc(collection(db, "student_progress"), {
+                    benchmark_id: "MA.K.NSO.1.1", // Standard: Count to 20
+                    value_counted: countValue,
+                    timestamp: serverTimestamp(),
+                    status: "success"
+                });
+                console.log("Progress saved to ThresholdEd Dashboard!");
+            } catch (e) {
+                console.error("Error saving progress: ", e);
+            }
+        }
 
         function initLevel() {
             card.classList.remove('is-flipped');
@@ -231,6 +261,9 @@
             setTimeout(() => {
                 card.classList.add('is-flipped');
                 inst.innerText = "There are " + currentCount + "! 🦁";
+                
+                // TELEMETRY: Record the success when the card flips
+                recordProgress(currentCount);
             }, 1200);
         }
 
@@ -239,7 +272,7 @@
             shuffleAndReveal();
         });
 
-        function resetGame() {
+        window.resetGame = function() {
             inst.innerText = "Tap the dots to count! 🦁";
             initLevel();
         }
